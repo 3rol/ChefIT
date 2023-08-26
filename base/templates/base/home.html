@@ -1,0 +1,19 @@
+<h1>HOME</h1>
+
+
+<div>
+    
+    <a href="{% url 'create-recipe'  %}">Create recipe</a>
+   <div>
+
+    {% for recipe in recipes %}
+    <div>
+        <a href="{% url 'update-recipe' recipe.id  %}">Edit recipe</a>
+        <a href="{% url 'delete-recipe' recipe.id  %}">Delete recipe</a>
+
+        <h5>{{recipe.id}} -- {{recipe.name}}</h5>
+    </div>
+    {% endfor %}
+   </div>
+
+</div>
