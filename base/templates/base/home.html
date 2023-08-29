@@ -33,9 +33,10 @@
      
          {% for recipe in recipes %}
          <div>
+            {% if request.user == recipe.user %}
              <a href="{% url 'update-recipe' recipe.id  %}">Edit recipe</a>
              <a href="{% url 'delete-recipe' recipe.id  %}">Delete recipe</a>
-     
+            {% endif %}
              <h5>{{recipe.id}} -- {{recipe.name}}</h5>
          </div>
          {% endfor %}
