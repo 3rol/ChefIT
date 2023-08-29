@@ -1,19 +1,48 @@
+{% extends 'main.html' %} 
+
+
 <h1>HOME</h1>
 
+{% block content %}
 
-<div>
-    
-    <a href="{% url 'create-recipe'  %}">Create recipe</a>
-   <div>
+<style>
+    .home-container{
+        display: grid;
+        grid-template-columns: 1fr 3fr;
+    }
+</style>
+<div class="home-container">
 
-    {% for recipe in recipes %}
     <div>
-        <a href="{% url 'update-recipe' recipe.id  %}">Edit recipe</a>
-        <a href="{% url 'delete-recipe' recipe.id  %}">Delete recipe</a>
+        <h3>Browse Recipes</h3>
+        <hr>
+        <div>
+            <a href="{% url 'home' %}">All</a>
+              </div>
 
-        <h5>{{recipe.id}} -- {{recipe.name}}</h5>
+        {% for recipe_type in recipe_types %}
+          <div>
+        <a href="{% url 'home' %}?q={{recipe_type.name}}">{{recipe_type.name}}</a>
+          </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-   </div>
+    
+    <div>
+        <a href="{% url 'create-recipe'  %}">Create recipe</a>
+        <div>
+     
+         {% for recipe in recipes %}
+         <div>
+             <a href="{% url 'update-recipe' recipe.id  %}">Edit recipe</a>
+             <a href="{% url 'delete-recipe' recipe.id  %}">Delete recipe</a>
+     
+             <h5>{{recipe.id}} -- {{recipe.name}}</h5>
+         </div>
+         {% endfor %}
+        </div>
+
+    </div>
+    
 
 </div>
+{% endblock content %}

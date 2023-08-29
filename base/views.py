@@ -1,12 +1,14 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from .models import Recipe
+from .models import Recipe, Recipe_Type
 from .forms import RecipeForm
 
 
 def home(request):
-    recipes = Recipe.objects.all()
-    context = {'recipes': recipes}
+    q = request.GET.get('q') if request.GET.get('q') != None else ''
+    recipes = Recipe.objects.filter(recipe_type__name__icontains=q)
+    recipe_types = Recipe_Type.objects.all()
+    context = {'recipes': recipes, 'recipe_types': recipe_types}
     return render(request, 'base/home.html', context)
 
 
