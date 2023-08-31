@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
-from .models import Recipe, Recipe_Type
+from .models import Recipe, Recipe_Type, Comment
 from .forms import RecipeForm
 
 
@@ -64,6 +64,22 @@ def home(request):
     return render(request, 'base/home.html', context)
 
 
+def recipe(request, pk):
+    recipe = Recipe.objects.get(id=pk)
+    recipe_comment = recipe.comment_set.all().order_by('-created')
+
+    if request.method == 'POST':
+        comment = Comment.objects.create(
+            user=request.user,
+            recipe=recipe,
+            body=request.POST.get('body')
+        )
+        return redirect('recipe', pk=recipe.id)
+
+    context = {'recipe': recipe, 'recipe_comment': recipe_comment}
+    return render(request, 'base/recipe.html', context)
+
+
 @login_required(login_url='login')
 def createRecipe(request):
     form = RecipeForm()
@@ -104,3 +120,16 @@ def deleteRecipe(request, pk):
         return redirect('home')
 
     return render(request, 'base/delete.html', {'obj': recipe})
+
+
+@login_required(login_url='login')
+def deleteComment(request, pk):
+    comment = Comment.objects.get(id=pk)
+    if request.user != comment.user:
+        return HttpResponse('You are not allowed to do this!')
+
+    if request.method == 'POST':
+        comment.delete()
+        return redirect('home')
+
+    return render(request, 'base/delete.html', {'obj': comment})
