@@ -4,6 +4,9 @@
 <h1>{{recipe.name}}</h1>
 
 <p>{{recipe.description}}</p>
+{% if recipe.recipe_image %}
+<img src="{{recipe.recipe_image.url}}">
+{% endif %}
 
 <div class="comment-wrapper">
     <h3>Comments</h3>
