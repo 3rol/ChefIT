@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     "corsheaders.middleware.CorsMiddleware",

@@ -4,9 +4,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import UserCreationForm
+from base.forms import UserCreationForm
 from .models import Recipe, Recipe_Type, Comment
 from .forms import RecipeForm
+from django.views.decorators.csrf import csrf_exempt
 
 
 def loginPage(request):
@@ -40,6 +41,7 @@ def logoutUser(request):
     return redirect('home')
 
 
+@csrf_exempt
 def registerPage(request):
     form = UserCreationForm()
 
