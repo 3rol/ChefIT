@@ -1,17 +1,64 @@
 from django.contrib.auth.models import User
 from rest_framework.serializers import ModelSerializer
-from base.models import Recipe
-from rest_framework import serializers
+from base.models import *
+from rest_framework import serializers, validators
+
+from django.contrib.auth.hashers import make_password
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+
+
+class RecipeTypeSerializer(ModelSerializer):
+    class Meta:
+        model = Recipe_Type
+        fields = '__all__'
 
 
 class RecipeSerializer(ModelSerializer):
+    user = UserSerializer()
+    recipe_type = RecipeTypeSerializer()
+
     class Meta:
         model = Recipe
         fields = '__all__'
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = '__all__'
+
+
+class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email',]
-        extra_kwargs = {'password': {'write_only': True, 'required': True}}
+        fields = ('username', 'password', 'email')
+
+        extra_kwargs = {
+            "password": {"write_only": True},
+            "email": {
+                "required": True,
+                "allow_blank": False,
+                "validators": [
+                    validators.UniqueValidator(
+                        User.objects.all(), "A user with this Email already exists"
+
+                    )
+                ]
+            }
+        }
+
+    def create(self, validated_data):
+        user = User(
+            email=validated_data.get('email'),
+            username=validated_data.get('username'),
+
+        )
+        user.set_password(validated_data.get('password'))
+        user.save()
+
+        return user
