@@ -199,7 +199,12 @@ def register_api(request):
 
 @api_view(['GET'])
 def getRecipes(request):
+    name = request.GET.get('name')
     recipes = Recipe.objects.all()
+
+    if name:
+        recipes = recipes.filter(name__icontains=name)
+
     serializer = RecipeSerializer(recipes, many=True)
     return Response(serializer.data)
 
