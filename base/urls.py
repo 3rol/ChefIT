@@ -16,12 +16,15 @@ urlpatterns = [
     path('recipes/addrecipe/', views.createRecipe, name='create_recipe'),
     path('recipes/getcomments/<int:pk>/',
          views.getCommentsForRecipe, name='get_comments_for_recipe'),
-    path('recipes/postcomment/<str:pk>/',
+    path('recipes/postcomment/<int:pk>/',
          views.postComment, name='post_comment'),
     # path('recipe/<str:pk>/', views.recipe, name="recipe"),
     # path('create-recipe/', views.createRecipe, name="create-recipe"),
     path('update-recipe/<str:pk>/', views.updateRecipe, name="update-recipe"),
-    path('delete-recipe/<str:pk>/', views.deleteRecipe, name="delete-recipe"),
-    path('delete-comment/<str:pk>/', views.deleteComment, name="delete-comment"),
-
+    path('recipes/delete-recipe/<int:pk>/',
+         views.deleteRecipe, name="delete-recipe"),
+    path('recipes/delete-comment/<int:pk>/',
+         views.deleteComment, name="delete-comment"),
+    path('recipes/getrecipetypes/', views.getRecipeTypes),
+    path('get_user_data/', views.get_user_data)
 ]

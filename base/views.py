@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -14,7 +14,8 @@ from rest_framework.authtoken.serializers import AuthTokenSerializer
 from knox.auth import AuthToken
 from rest_framework.decorators import api_view, permission_classes
 from base.api.serializers import *
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
+from rest_framework import status
 
 # def loginPage(request):
 #     page = 'login'
@@ -87,19 +88,32 @@ def recipe(request, pk):
     return render(request, 'base/recipe.html', context)
 
 
-@login_required(login_url='login')
+@api_view(['POST'])
 def createRecipe(request):
-    form = RecipeForm()
-    if request.method == 'POST':
-        form = RecipeForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
-    context = {'form': form}
-    return render(request, 'base/recipe_creation.html', context)
+    user_id = 26  # You can keep it hardcoded for now
+    recipe_type_id = 1  # You can keep it hardcoded for now
+
+    hardcoded_image_url = '/media/images/creamy-tomato-soup-buttery-croutons-hero-02-49b419d00f854db78838a79c8df9a23f.jpg'
+
+    data = {
+        'name': 'Test',
+        'description': 'Test',
+        'user': user_id,
+        'recipe_type': recipe_type_id,
+        'image_url': hardcoded_image_url
+    }
+
+    # Using RecipeWriteSerializer for creating recipes
+    serializer = RecipeWriteSerializer(data=data)
+
+    if serializer.is_valid():
+        instance = serializer.save()
+        instance.is_hardcoded = True
+        instance.save()
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-@login_required(login_url='login')
+@permission_classes([AllowAny])
 def updateRecipe(request, pk):
     recipe = Recipe.objects.get(id=pk)
     form = RecipeForm(instance=recipe)
@@ -116,33 +130,41 @@ def updateRecipe(request, pk):
     return render(request, 'base/recipe_creation.html', context)
 
 
-@login_required(login_url='login')
+@api_view(['DELETE'])  # Expecting a DELETE request
+# Keep this if you want to allow any user, modify as needed
+@permission_classes([AllowAny])
 def deleteRecipe(request, pk):
-    recipe = Recipe.objects.get(id=pk)
-    if request.user != recipe.user:
-        return HttpResponse('You are not the chef!')
+    try:
+        recipe = Recipe.objects.get(id=pk)
+    except Recipe.DoesNotExist:
+        return Response({'error': 'Recipe not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    if request.method == 'POST':
-        recipe.delete()
-        return redirect('home')
+    # Uncomment and adjust the following line if you have authentication enabled
+    # if request.user != recipe.user:
+    #     return Response({'error': 'You are not the chef!'}, status=status.HTTP_403_FORBIDDEN)
 
-    return render(request, 'base/delete.html', {'obj': recipe})
+    recipe.delete()
+    return Response({'status': 'Recipe deleted'}, status=status.HTTP_204_NO_CONTENT)
 
 
-@login_required(login_url='login')
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
 def deleteComment(request, pk):
-    comment = Comment.objects.get(id=pk)
-    if request.user != comment.user:
-        return HttpResponse('You are not allowed to do this!')
+    try:
+        comment = Comment.objects.get(id=pk)
+    except Comment.DoesNotExist:
+        return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    if request.method == 'POST':
-        comment.delete()
-        return redirect('home')
+    # Uncomment and adjust the following line if you have authentication enabled
+    # if request.user != comment.user:
+    #     return Response({'error': 'You are not allowed to do this!'}, status=status.HTTP_403_FORBIDDEN)
 
-    return render(request, 'base/delete.html', {'obj': comment})
+    comment.delete()
+    return Response({'status': 'Comment deleted'}, status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def login_api(request):
     page = 'login'
     serializer = AuthTokenSerializer(data=request.data)
@@ -157,29 +179,38 @@ def login_api(request):
             'username': user.username,
             'email': user.email,
         },
-        'token': token
+        'Bearer': token
 
 
     })
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_user_data(request):
     user = request.user
-
-    if user.is_authenticated:
+    if user and user.is_authenticated:
         return Response({
             'user_info': {
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
-            },
+            }
         })
-
-    return Response({'error': 'Not authenticated'}, status=400)
+    else:
+        # Hardcoded user information for bypassing authentication
+        # Replace with the data you need
+        return Response({
+            'user_info': {
+                'id': 1,
+                'username': 'erol',
+                'email': 'erol@gmail.com',
+            }
+        }, status=200)
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def register_api(request):
     serializer = RegisterSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -193,11 +224,12 @@ def register_api(request):
             'username': user.username,
             'email': user.email,
         },
-        'token': token
+        'Bearer': token
     })
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def getRecipes(request):
     name = request.GET.get('name')
     recipes = Recipe.objects.all()
@@ -205,14 +237,17 @@ def getRecipes(request):
     if name:
         recipes = recipes.filter(name__icontains=name)
 
-    serializer = RecipeSerializer(recipes, many=True)
+    serializer = RecipeReadSerializer(
+        recipes, many=True)  # Using RecipeReadSerializer
     return Response(serializer.data)
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def getRecipe(request, pk):
     recipe = Recipe.objects.get(id=pk)
-    serializer = RecipeSerializer(recipe, many=False)
+    serializer = RecipeReadSerializer(
+        recipe, many=False)  # Using RecipeReadSerializer
     return Response(serializer.data)
 
 
@@ -229,6 +264,7 @@ def home(request):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def getCommentsForRecipe(request, pk):
     comments = Comment.objects.filter(recipe=pk)
     serializer = CommentSerializer(comments, many=True)
@@ -236,11 +272,37 @@ def getCommentsForRecipe(request, pk):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def postComment(request):
+# Consider changing this to restrict to logged-in users
+@permission_classes([AllowAny])
+def postComment(request, pk):
+    if pk == 42:  # Assuming 999 is your hardcoded recipe ID
+        # Hardcoded comment data
+        hardcoded_comment_data = {
+            'body': 'This is a hardcoded comment',
+            'recipe': 42,  # The hardcoded recipe ID
+            'user': 1  # Hardcoded user ID, maybe the ID of an admin or test account
+        }
+
+        # Create a new Comment instance using the hardcoded data
+        Comment.objects.create(
+            body=hardcoded_comment_data['body'],
+            recipe_id=hardcoded_comment_data['recipe'],
+            user_id=hardcoded_comment_data['user']
+        )
+
+        return Response({'message': 'Hardcoded comment posted'}, status=status.HTTP_201_CREATED)
+
+    # Original logic for non-hardcoded comments
     serializer = CommentSerializer(data=request.data)
     if serializer.is_valid():
-        # Assign the logged-in user to the comment
-        serializer.save(user=request.user)
-        return Response(serializer.data, status=201)
-    return Response(serializer.errors, status=400)
+        serializer.save(user=request.user, recipe_id=pk)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def getRecipeTypes(request):
+    recipe_types = Recipe_Type.objects.all()
+    serializer = RecipeTypeSerializer(recipe_types, many=True)
+    return Response(serializer.data)

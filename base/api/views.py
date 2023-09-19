@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from django.contrib.auth.models import User
 from rest_framework import viewsets
 from base.models import Recipe
-from .serializers import RecipeSerializer
+from .serializers import *
 from base.api.serializers import RegisterSerializer
 from rest_framework import permissions
 from rest_framework.parsers import JSONParser
@@ -59,7 +59,7 @@ def create_recipe(request):
     if request.method == 'POST':
         # Parse JSON data from the request
         data = JSONParser().parse(request)
-        serializer = RecipeSerializer(data=data)
+        serializer = RecipeWriteSerializer(data=data)
 
         if serializer.is_valid():
             # Save the new recipe to the database
@@ -80,7 +80,7 @@ def create_recipe(request):
 
 class ApiRecipeListView(ListAPIView):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
+    serializer_class = RecipeReadSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
     search_fields = ['name', 'description']
     filterset_fields = ['name']
