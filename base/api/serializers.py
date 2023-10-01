@@ -18,7 +18,7 @@ class RecipeTypeSerializer(ModelSerializer):
         fields = '__all__'
 
 
-class RecipeReadSerializer(ModelSerializer):
+class RecipeSerializer(ModelSerializer):
     user = UserSerializer()
     recipe_type = RecipeTypeSerializer()
 
@@ -27,19 +27,9 @@ class RecipeReadSerializer(ModelSerializer):
         fields = '__all__'
 
 
-class RecipeWriteSerializer(ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    recipe_type = serializers.PrimaryKeyRelatedField(
-        queryset=Recipe_Type.objects.all())
-
-    class Meta:
-        model = Recipe
-        fields = '__all__'
-
-
 class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializer()
-    recipe = RecipeReadSerializer()
+    recipe = RecipeSerializer()
 
     class Meta:
         model = Comment

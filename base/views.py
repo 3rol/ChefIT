@@ -90,25 +90,11 @@ def recipe(request, pk):
 
 @api_view(['POST'])
 def createRecipe(request):
-    user_id = 26  # You can keep it hardcoded for now
-    recipe_type_id = 1  # You can keep it hardcoded for now
 
-    hardcoded_image_url = '/media/images/creamy-tomato-soup-buttery-croutons-hero-02-49b419d00f854db78838a79c8df9a23f.jpg'
-
-    data = {
-        'name': 'Test',
-        'description': 'Test',
-        'user': user_id,
-        'recipe_type': recipe_type_id,
-        'image_url': hardcoded_image_url
-    }
-
-    # Using RecipeWriteSerializer for creating recipes
-    serializer = RecipeWriteSerializer(data=data)
+    serializer = RecipeSerializer()
 
     if serializer.is_valid():
         instance = serializer.save()
-        instance.is_hardcoded = True
         instance.save()
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -130,18 +116,13 @@ def updateRecipe(request, pk):
     return render(request, 'base/recipe_creation.html', context)
 
 
-@api_view(['DELETE'])  # Expecting a DELETE request
-# Keep this if you want to allow any user, modify as needed
+@api_view(['DELETE'])
 @permission_classes([AllowAny])
 def deleteRecipe(request, pk):
     try:
         recipe = Recipe.objects.get(id=pk)
     except Recipe.DoesNotExist:
         return Response({'error': 'Recipe not found'}, status=status.HTTP_404_NOT_FOUND)
-
-    # Uncomment and adjust the following line if you have authentication enabled
-    # if request.user != recipe.user:
-    #     return Response({'error': 'You are not the chef!'}, status=status.HTTP_403_FORBIDDEN)
 
     recipe.delete()
     return Response({'status': 'Recipe deleted'}, status=status.HTTP_204_NO_CONTENT)
@@ -154,10 +135,6 @@ def deleteComment(request, pk):
         comment = Comment.objects.get(id=pk)
     except Comment.DoesNotExist:
         return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
-
-    # Uncomment and adjust the following line if you have authentication enabled
-    # if request.user != comment.user:
-    #     return Response({'error': 'You are not allowed to do this!'}, status=status.HTTP_403_FORBIDDEN)
 
     comment.delete()
     return Response({'status': 'Comment deleted'}, status=status.HTTP_204_NO_CONTENT)
@@ -197,16 +174,6 @@ def get_user_data(request):
                 'email': user.email,
             }
         })
-    else:
-        # Hardcoded user information for bypassing authentication
-        # Replace with the data you need
-        return Response({
-            'user_info': {
-                'id': 1,
-                'username': 'erol',
-                'email': 'erol@gmail.com',
-            }
-        }, status=200)
 
 
 @api_view(['POST'])
@@ -237,8 +204,8 @@ def getRecipes(request):
     if name:
         recipes = recipes.filter(name__icontains=name)
 
-    serializer = RecipeReadSerializer(
-        recipes, many=True)  # Using RecipeReadSerializer
+    serializer = RecipeSerializer(
+        recipes, many=True)
     return Response(serializer.data)
 
 
@@ -246,8 +213,8 @@ def getRecipes(request):
 @permission_classes([AllowAny])
 def getRecipe(request, pk):
     recipe = Recipe.objects.get(id=pk)
-    serializer = RecipeReadSerializer(
-        recipe, many=False)  # Using RecipeReadSerializer
+    serializer = RecipeSerializer(
+        recipe, many=False)
     return Response(serializer.data)
 
 
@@ -272,27 +239,8 @@ def getCommentsForRecipe(request, pk):
 
 
 @api_view(['POST'])
-# Consider changing this to restrict to logged-in users
 @permission_classes([AllowAny])
 def postComment(request, pk):
-    if pk == 42:  # Assuming 999 is your hardcoded recipe ID
-        # Hardcoded comment data
-        hardcoded_comment_data = {
-            'body': 'This is a hardcoded comment',
-            'recipe': 42,  # The hardcoded recipe ID
-            'user': 1  # Hardcoded user ID, maybe the ID of an admin or test account
-        }
-
-        # Create a new Comment instance using the hardcoded data
-        Comment.objects.create(
-            body=hardcoded_comment_data['body'],
-            recipe_id=hardcoded_comment_data['recipe'],
-            user_id=hardcoded_comment_data['user']
-        )
-
-        return Response({'message': 'Hardcoded comment posted'}, status=status.HTTP_201_CREATED)
-
-    # Original logic for non-hardcoded comments
     serializer = CommentSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save(user=request.user, recipe_id=pk)
